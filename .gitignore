@@ -1,0 +1,8 @@
+.*
+*.py[co]
+*.vim
+*.db
+*.mo
+*.log
+local_*
+htmlcov/
