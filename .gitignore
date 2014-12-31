@@ -4,5 +4,6 @@
 *.db
 *.mo
 *.log
+*.sqlite3
 local_*
 htmlcov/
