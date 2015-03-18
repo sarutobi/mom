@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.contrib.gis.db.models.query import GeoQuerySet
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 
 
 class Category(models.Model):
-    """ Message categories """
+    """ Event categories """
     class Meta:
         ordering = ['order']
         verbose_name = _('Category')
@@ -29,74 +27,32 @@ class Category(models.Model):
         return self.name
 
 
-class MessageQueryset(GeoQuerySet):
-    def list(self):
-        """ Ask only few fields for listing"""
-
-        return self.values(
-            'id', 'title', 'message', 'messageType',
-            'date_add', )
-
-    def active(self):
-        return self.filter(
-            status__gt=Message.NEW, status__lt=Message.CLOSED,
-            is_removed=False
-        )
-
-    def closed(self):
-        return self.filter(status=Message.CLOSED)
-
-    def type_is(self, m_type):
-        return self.filter(messageType=m_type)
-
-    def is_deleted(self):
-        return self.filter(is_removed=True)
-
-
-class Message(models.Model):
-    """ Message data """
+class Event(models.Model):
+    """ Event data """
 
     class Meta():
         ordering = ['-date_add']
         get_latest_by = 'date_add'
-        verbose_name = _('Message')
-        verbose_name_plural = _('Messages')
-
-    # Message status
-    NEW = 1
-    UNVERIFIED = 2
-    VERIFIED = 3
-    PENDING = 4
-    CLOSED = 6
-
-    MESSAGE_STATUS = ((NEW, _('New')),
-                      (UNVERIFIED, _('Unverified')),
-                      (VERIFIED, _('Verified')),
-                      (PENDING, _('Pending')),
-                      (CLOSED, _('Closed')))
+        verbose_name = _('Event')
+        verbose_name_plural = _('Events')
 
     # Main message fields
     title = models.CharField(
         max_length=200,
-        verbose_name=_('title'),
+        verbose_name=_('Title'),
         blank=True)
     message = models.TextField(verbose_name=_('Message'))
-    # Link to message author.
-    status = models.SmallIntegerField(
-        choices=MESSAGE_STATUS,
-        verbose_name=_('status'),
-        default=NEW, blank=True, null=True
-    )
-    start_date = models.DateTimeField(
-        verbose_name=_("started at"),
+
+    started_at = models.DateTimeField(
+        verbose_name=_("Started at"),
         blank=True, null=True)
-    expired_date = models.DateTimeField(
-        verbose_name=_("expired at"),
+    finished_at = models.DateTimeField(
+        verbose_name=_("Expired at"),
         blank=True, null=True
     )
     address = models.CharField(
         max_length=200,
-        verbose_name=_("address"),
+        verbose_name=_("Address"),
         blank=True
     )
     location = models.MultiPointField(
@@ -109,21 +65,14 @@ class Message(models.Model):
         verbose_name=_("message categories"),
         null=True, blank=True
     )
-    user = models.ForeignKey(
-        User,
-        verbose_name=_("User"),
-        editable=False,
-        db_column='user_id',
-    )
+    source = models.CharField(
+        max_length=255,
+        verbose_name=_('source'),
+        blank=True)
     # Moderator's fields
-    # Message can be inactive, i.e. not 'closed' and no more information can be
-    # added.
+    # Message can be inactive
     is_active = models.BooleanField(
         default=False, verbose_name=_('active')
-    )
-    # Is it urgent message?
-    is_important = models.BooleanField(
-        default=False, verbose_name=_('important')
     )
 
     #Internal fields
@@ -141,27 +90,7 @@ class Message(models.Model):
     objects = models.GeoManager()
 
     def __unicode__(self):
-        return self.title or "Untitled"
+        return self.title or _("Untitled")
 
     def get_absolute_url(self):
         return reverse_lazy("message-details", args=[str(self.pk)])
-
-
-class MessageNotes(models.Model):
-    """ Moderator notes for message """
-
-    message = models.ForeignKey(Message)
-    user = models.ForeignKey(User, editable=False, verbose_name=_("Author"))
-    note = models.TextField(verbose_name=_("Note"))
-    date_add = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        verbose_name=_("Created at"))
-    last_edit = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-        verbose_name=_("Last edit"))
-
-    def __unicode__(self):
-        return _("Note from %(user)s to message %(msgid)d")\
-            % {'user': self.user, 'msgid': self.message_id, }
