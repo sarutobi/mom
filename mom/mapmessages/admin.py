@@ -2,7 +2,8 @@
 
 from django.contrib import admin
 
-from .models import Message, Category
+from .models import City, Event, Category
 
+admin.site.register(City)
 admin.site.register(Category)
-admin.site.register(Message)
+admin.site.register(Event)

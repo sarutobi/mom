@@ -5,6 +5,24 @@ from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 
 
+class City(models.Model):
+    """ One city definition """
+    class Meta:
+        verbose_name = _("City")
+        verbose_name_plural = _("Cities")
+
+    name = models.CharField(
+        max_length=100,
+        verbose_name=_("Name")
+    )
+    map_zoom = models.IntegerField(
+        verbose_name=_("Map zoom")
+    )
+    map_center = models.PointField(
+        verbose_name=_("Map center")
+    )
+
+
 class Category(models.Model):
     """ Event categories """
     class Meta:
